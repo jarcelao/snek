@@ -1,11 +1,12 @@
-FROM python:3.10.6-slim
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
 
-# Install app
-COPY . /usr/app
-WORKDIR /usr/app
+WORKDIR /app
 
-# Install dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
 
-# Run Battlesnake
-CMD [ "python", "main.py" ]
+COPY . ./
+
+ENV PATH="/app/.venv/bin:${PATH}"
+
+CMD ["python", "main.py"]

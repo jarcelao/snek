@@ -1,0 +1,9 @@
+[project]
+name = "battlesnake"
+version = "0.1.0"
+description = "A Battlesnake service written in Python."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "flask~=3.1.3",
+]
