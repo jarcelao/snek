@@ -1,5 +1,9 @@
-import random
 import typing
+
+from battlesnake_env.rules import BoardState
+
+
+ACTION_BY_MOVE = {"up": 0, "down": 1, "left": 2, "right": 3}
 
 
 def info() -> typing.Dict:
@@ -44,25 +48,69 @@ def move(game_state: typing.Dict) -> typing.Dict:
     board_width = game_state['board']['width']
     board_height = game_state['board']['height']
 
-    my_body = game_state['you']['body']
-
-    opponents = game_state['board']['snakes']
-
-    safe_moves = []
-    for move, isSafe in is_move_safe.items():
-        if isSafe:
-            safe_moves.append(move)
+    occupied = {
+        (part["x"], part["y"])
+        for snake in game_state["board"]["snakes"]
+        for part in snake["body"][:-1]
+    }
+    deltas = {"up": (0, 1), "down": (0, -1), "left": (-1, 0), "right": (1, 0)}
+    safe_moves = [
+        direction
+        for direction, is_safe in is_move_safe.items()
+        if is_safe
+        and 0 <= my_head["x"] + deltas[direction][0] < board_width
+        and 0 <= my_head["y"] + deltas[direction][1] < board_height
+        and (my_head["x"] + deltas[direction][0], my_head["y"] + deltas[direction][1]) not in occupied
+    ]
 
     if len(safe_moves) == 0:
         print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
         return {"move": "down"}
 
-    next_move = random.choice(safe_moves)
-
     food = game_state['board']['food']
+
+    def food_distance(direction: str) -> int:
+        dx, dy = deltas[direction]
+        next_head = (my_head["x"] + dx, my_head["y"] + dy)
+        return min(
+            (abs(next_head[0] - item["x"]) + abs(next_head[1] - item["y"]) for item in food),
+            default=0,
+        )
+
+    # Stable ordering makes local matches repeatable. Food is a simple baseline
+    # that gives the template snake a practical objective in the environment.
+    next_move = min(safe_moves, key=food_distance)
 
     print(f"MOVE {game_state['turn']}: {next_move}")
     return {"move": next_move}
+
+
+def environment_policy(state: BoardState, snake_id: str) -> int:
+    """Run this Battlesnake's HTTP-style move handler in ``BattlesnakeEnv``."""
+    snake = next(snake for snake in state.snakes if snake.id == snake_id)
+    game_state = {
+        "turn": state.turn,
+        "you": {
+            "id": snake.id,
+            "health": snake.health,
+            "body": [{"x": part.x, "y": part.y} for part in snake.body],
+        },
+        "board": {
+            "width": state.width,
+            "height": state.height,
+            "food": [{"x": food.x, "y": food.y} for food in state.food],
+            "snakes": [
+                {
+                    "id": other.id,
+                    "health": other.health,
+                    "body": [{"x": part.x, "y": part.y} for part in other.body],
+                }
+                for other in state.snakes
+                if other.alive
+            ],
+        },
+    }
+    return ACTION_BY_MOVE[move(game_state)["move"]]
 
 
 if __name__ == "__main__":
