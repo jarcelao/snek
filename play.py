@@ -1,11 +1,11 @@
-"""Run a local match: snek versus Devious Devin."""
+"""Run a local match: Sneklet versus Devious Devin."""
 
 from __future__ import annotations
 
 import argparse
 
 from battlesnake_env import BattlesnakeEnv, devious_devin
-from snek import environment_policy
+from snakes.sneklet import environment_policy
 
 
 def play(seed: int, *, render: bool = False) -> tuple[float, int, str]:
@@ -22,7 +22,7 @@ def play(seed: int, *, render: bool = False) -> tuple[float, int, str]:
             learner = info["state"].snakes[0]
             result = "won" if reward > 0 else "lost" if reward < 0 else "tied or reached the turn limit"
             print(
-                f"Seed {seed}: snek {result} on turn "
+                f"Seed {seed}: Sneklet {result} on turn "
                 f"{info['state'].turn} ({learner.elimination or 'last snake alive'})."
             )
             return reward, info["state"].turn, result

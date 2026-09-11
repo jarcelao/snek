@@ -1,3 +1,8 @@
+"""
+Basic snake adapted from the official Battlesnake Python template:
+https://github.com/BattlesnakeOfficial/starter-snake-python
+"""
+
 import typing
 
 from battlesnake_env.rules import BoardState

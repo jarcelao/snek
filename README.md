@@ -30,12 +30,12 @@ to return a text board for debugging.
 
 ## Snake policy
 
-`snek.py` contains an example policy. Use `environment_policy` with
+`snakes/sneklet.py` contains an example policy. Use `environment_policy` with
 `BattlesnakeEnv` to play it in a local match.
 
 ```python
 from battlesnake_env import BattlesnakeEnv, devious_devin
-from snek import environment_policy
+from snakes.sneklet import environment_policy
 
 env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
 _, info = env.reset(seed=7)
