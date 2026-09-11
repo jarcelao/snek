@@ -2,10 +2,7 @@
 
 ## Training environment
 
-`battlesnake_env.BattlesnakeEnv` is a single-agent Gymnasium environment for
-the standard Battlesnake ruleset. The learning snake uses actions `0` through
-`3` for up, down, left, and right. Supply one opponent callable for all other
-snakes.
+`battlesnake_env.BattlesnakeEnv` is a single-agent Gymnasium environment for the standard Battlesnake ruleset. The learning snake uses actions `0` through `3` for up, down, left, and right. Supply one opponent callable for all other snakes.
 
 ```python
 from battlesnake_env import BattlesnakeEnv
@@ -15,8 +12,7 @@ observation, info = env.reset(seed=123)
 observation, reward, terminated, truncated, info = env.step(0)
 ```
 
-`devious_devin()` provides a deterministic paranoid-minimax opponent. Its
-`max_depth` value is the number of complete simultaneous turns it searches.
+`devious_devin()` provides a deterministic paranoid-minimax opponent. Its `max_depth` value is the number of complete simultaneous turns it searches.
 
 ```python
 from battlesnake_env import BattlesnakeEnv, devious_devin
@@ -24,14 +20,11 @@ from battlesnake_env import BattlesnakeEnv, devious_devin
 env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
 ```
 
-The observation is an eight-channel `float32` board tensor. `info` contains an
-immutable `BoardState` and an advisory action mask. Use `render_mode="ansi"`
-to return a text board for debugging.
+The observation is an eight-channel `float32` board tensor. `info` contains an immutable `BoardState` and an advisory action mask. Use `render_mode="ansi"` to return a text board for debugging.
 
 ## Snake policy
 
-`snakes/sneklet.py` contains an example policy. Use `environment_policy` with
-`BattlesnakeEnv` to play it in a local match.
+`snakes/sneklet.py` contains an example policy. Use `environment_policy` with `BattlesnakeEnv` to play it in a local match.
 
 ```python
 from battlesnake_env import BattlesnakeEnv, devious_devin
@@ -54,14 +47,11 @@ Select another adapter with `--snake`. Each adapter supplies its own options:
 uv run python play.py --snake snakes.snek --genome training/run-1/winner.pkl
 ```
 
-Snake adapters must be modules inside `snakes` that define
-`configure_play_parser(parser)` and `create_play_policy(args)`.
+Snake adapters must be modules inside `snakes` that define `configure_play_parser(parser)` and `create_play_policy(args)`.
 
 ## NEAT snake
 
-`snakes.snek` trains a feed-forward NEAT network against Devious Devin. The
-network uses 20 compact inputs. They describe safe moves, nearby walls and
-occupied cells, food, the nearest opponent, health, length, and turn progress.
+`snakes.snek` trains a feed-forward NEAT network against Devious Devin. The network uses 20 compact inputs. They describe safe moves, nearby walls and occupied cells, food, the nearest opponent, health, length, and turn progress.
 
 Start a reproducible local training run:
 
@@ -69,9 +59,7 @@ Start a reproducible local training run:
 uv run python -m snakes.snek train
 ```
 
-The command writes `winner.pkl`, the effective `config.ini`, a statistics CSV,
-and periodic checkpoints to a timestamped subfolder under `train/snek/`. Use
-command options to change the workload or output parent:
+The command writes `winner.pkl`, the effective `config.ini`, a statistics CSV, and periodic checkpoints to a timestamped subfolder under `train/snek/`. Use command options to change the workload or output parent:
 
 ```console
 uv run python -m snakes.snek train \
@@ -81,8 +69,7 @@ uv run python -m snakes.snek train \
   --output-dir train/snek
 ```
 
-Resume a run from a checkpoint. `--generations` is the number of additional
-generations to run:
+Resume a run from a checkpoint. `--generations` is the number of additional generations to run:
 
 ```console
 uv run python -m snakes.snek train \
@@ -109,5 +96,4 @@ _, info = env.reset(seed=7)
 action = policy(info["state"], "snake-0")
 ```
 
-Only load genome files that you trust. NEAT genome and checkpoint files use
-Python pickle serialization.
+Only load genome files that you trust. NEAT genome and checkpoint files use Python pickle serialization.
