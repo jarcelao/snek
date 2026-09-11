@@ -41,3 +41,58 @@ env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
 _, info = env.reset(seed=7)
 action = environment_policy(info["state"], "snake-0")
 ```
+
+## NEAT snake
+
+`snakes.snek` trains a feed-forward NEAT network against Devious Devin. The
+network uses 20 compact inputs. They describe safe moves, nearby walls and
+occupied cells, food, the nearest opponent, health, length, and turn progress.
+
+Start a reproducible local training run:
+
+```console
+uv run python -m snakes.snek train
+```
+
+The command writes `winner.pkl`, the effective `config.ini`, a statistics CSV,
+and periodic checkpoints to `snek-training/`. Use command options to change the
+workload or output location:
+
+```console
+uv run python -m snakes.snek train \
+  --generations 50 \
+  --population 100 \
+  --games 10 \
+  --output-dir training/run-1
+```
+
+Resume a run from a checkpoint. `--generations` is the number of additional
+generations to run:
+
+```console
+uv run python -m snakes.snek train \
+  --resume-checkpoint training/run-1/checkpoint-10 \
+  --generations 10 \
+  --output-dir training/run-1
+```
+
+Evaluate a saved winner on a stable benchmark seed set:
+
+```console
+uv run python -m snakes.snek evaluate training/run-1/winner.pkl --games 50
+```
+
+Load the winner for use with `BattlesnakeEnv`:
+
+```python
+from battlesnake_env import BattlesnakeEnv, devious_devin
+from snakes.snek import load_policy
+
+policy = load_policy("training/run-1/winner.pkl")
+env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=1))
+_, info = env.reset(seed=7)
+action = policy(info["state"], "snake-0")
+```
+
+Only load genome files that you trust. NEAT genome and checkpoint files use
+Python pickle serialization.
