@@ -1,4 +1,4 @@
-# A Battlesnake service written in Python.
+# A local Battlesnake simulation environment.
 
 ## Training environment
 
@@ -27,3 +27,17 @@ env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
 The observation is an eight-channel `float32` board tensor. `info` contains an
 immutable `BoardState` and an advisory action mask. Use `render_mode="ansi"`
 to return a text board for debugging.
+
+## Snake policy
+
+`snek.py` contains the template snake policy. Use `environment_policy` with
+`BattlesnakeEnv` to play it in a local match.
+
+```python
+from battlesnake_env import BattlesnakeEnv, devious_devin
+from snek import environment_policy
+
+env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
+_, info = env.reset(seed=7)
+action = environment_policy(info["state"], "snake-0")
+```

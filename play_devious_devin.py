@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from battlesnake_env import BattlesnakeEnv, devious_devin
-from main import environment_policy
+from snek import environment_policy
 
 
 def play(seed: int, *, render: bool = False) -> tuple[float, int, str]:

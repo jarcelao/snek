@@ -1,5 +1,5 @@
 from battlesnake_env import BattlesnakeEnv, devious_devin
-from main import environment_policy
+from snek import environment_policy
 
 
 def test_template_snake_can_play_against_devious_devin():

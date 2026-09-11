@@ -6,28 +6,8 @@ from battlesnake_env.rules import BoardState
 ACTION_BY_MOVE = {"up": 0, "down": 1, "left": 2, "right": 3}
 
 
-def info() -> typing.Dict:
-    print("INFO")
-
-    return {
-        "apiversion": "1",
-        "author": "jarcelao",
-        "color": "#c6a0f6",
-        "head": "replit-mark",
-        "tail": "replit-notmark",
-    }
-
-
-def start(game_state: typing.Dict):
-    print("GAME START")
-
-
-def end(game_state: typing.Dict):
-    print("GAME OVER\n")
-
-
 def move(game_state: typing.Dict) -> typing.Dict:
-
+    """Select a move from a Battlesnake-format game state."""
     is_move_safe = {"up": True, "down": True, "left": True, "right": True}
 
     my_head = game_state["you"]["body"][0]
@@ -45,8 +25,8 @@ def move(game_state: typing.Dict) -> typing.Dict:
     elif my_neck["y"] > my_head["y"]:
         is_move_safe["up"] = False
 
-    board_width = game_state['board']['width']
-    board_height = game_state['board']['height']
+    board_width = game_state["board"]["width"]
+    board_height = game_state["board"]["height"]
 
     occupied = {
         (part["x"], part["y"])
@@ -60,14 +40,15 @@ def move(game_state: typing.Dict) -> typing.Dict:
         if is_safe
         and 0 <= my_head["x"] + deltas[direction][0] < board_width
         and 0 <= my_head["y"] + deltas[direction][1] < board_height
-        and (my_head["x"] + deltas[direction][0], my_head["y"] + deltas[direction][1]) not in occupied
+        and (my_head["x"] + deltas[direction][0], my_head["y"] + deltas[direction][1])
+        not in occupied
     ]
 
-    if len(safe_moves) == 0:
+    if not safe_moves:
         print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
         return {"move": "down"}
 
-    food = game_state['board']['food']
+    food = game_state["board"]["food"]
 
     def food_distance(direction: str) -> int:
         dx, dy = deltas[direction]
@@ -77,16 +58,13 @@ def move(game_state: typing.Dict) -> typing.Dict:
             default=0,
         )
 
-    # Stable ordering makes local matches repeatable. Food is a simple baseline
-    # that gives the template snake a practical objective in the environment.
     next_move = min(safe_moves, key=food_distance)
-
     print(f"MOVE {game_state['turn']}: {next_move}")
     return {"move": next_move}
 
 
 def environment_policy(state: BoardState, snake_id: str) -> int:
-    """Run this Battlesnake's HTTP-style move handler in ``BattlesnakeEnv``."""
+    """Select an action for a snake in ``BattlesnakeEnv``."""
     snake = next(snake for snake in state.snakes if snake.id == snake_id)
     game_state = {
         "turn": state.turn,
@@ -111,9 +89,3 @@ def environment_policy(state: BoardState, snake_id: str) -> int:
         },
     }
     return ACTION_BY_MOVE[move(game_state)["move"]]
-
-
-if __name__ == "__main__":
-    from server import run_server
-
-    run_server({"info": info, "start": start, "move": move, "end": end})
