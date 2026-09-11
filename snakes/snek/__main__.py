@@ -37,7 +37,9 @@ def _parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--checkpoint-interval", type=_non_negative, default=5)
     train_parser.add_argument("--resume-checkpoint", type=Path)
 
-    evaluate_parser = commands.add_parser("evaluate", help="evaluate a saved winning genome")
+    evaluate_parser = commands.add_parser(
+        "evaluate", help="evaluate a saved winning genome"
+    )
     evaluate_parser.add_argument("genome", type=Path)
     evaluate_parser.add_argument("--config", type=Path)
     evaluate_parser.add_argument("--games", type=_positive, default=20)
@@ -51,17 +53,19 @@ def main(argv: list[str] | None = None) -> int:
     """Run the selected command."""
     args = _parser().parse_args(argv)
     if args.command == "train":
-        result = train(TrainingOptions(
-            generations=args.generations,
-            population=args.population,
-            games=args.games,
-            max_turns=args.max_turns,
-            devin_depth=args.devin_depth,
-            seed=args.seed,
-            output_dir=args.output_dir,
-            checkpoint_interval=args.checkpoint_interval,
-            resume_checkpoint=args.resume_checkpoint,
-        ))
+        result = train(
+            TrainingOptions(
+                generations=args.generations,
+                population=args.population,
+                games=args.games,
+                max_turns=args.max_turns,
+                devin_depth=args.devin_depth,
+                seed=args.seed,
+                output_dir=args.output_dir,
+                checkpoint_interval=args.checkpoint_interval,
+                resume_checkpoint=args.resume_checkpoint,
+            )
+        )
         print(f"Winner: {result.winner_path}")
         print(f"Fitness: {result.fitness:.3f}")
         return 0

@@ -2,25 +2,33 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import random
-from typing import TypeAlias
+from collections.abc import Callable
 
 import gymnasium as gym
 import numpy as np
 
-from .rules import BoardState, DELTAS, MAX_HEALTH, Settings, initial_state, step
+from .rules import DELTAS, MAX_HEALTH, BoardState, Settings, initial_state, step
 
-OpponentPolicy: TypeAlias = Callable[[BoardState, str], int]
+type OpponentPolicy = Callable[[BoardState, str], int]
 
 
 class BattlesnakeEnv(gym.Env[np.ndarray, int]):
-    metadata = {"render_modes": ["ansi"], "render_fps": 4}
-
-    def __init__(self, opponent_policy: OpponentPolicy, *, width: int = 11, height: int = 11,
-                 num_snakes: int = 2, food_spawn_chance: int = 15, minimum_food: int = 1,
-                 hazard_damage_per_turn: int = 14, max_turns: int | None = 500,
-                 render_mode: str | None = None, ruleset: str = "standard", game_map: str = "standard"):
+    def __init__(
+        self,
+        opponent_policy: OpponentPolicy,
+        *,
+        width: int = 11,
+        height: int = 11,
+        num_snakes: int = 2,
+        food_spawn_chance: int = 15,
+        minimum_food: int = 1,
+        hazard_damage_per_turn: int = 14,
+        max_turns: int | None = 500,
+        render_mode: str | None = None,
+        ruleset: str = "standard",
+        game_map: str = "standard",
+    ):
         if ruleset != "standard" or game_map != "standard":
             raise ValueError("only the standard ruleset and standard map are supported")
         if width != height or width < 7 or width > 25 or width % 2 == 0:
@@ -31,23 +39,46 @@ class BattlesnakeEnv(gym.Env[np.ndarray, int]):
             raise ValueError("standard boards below 11x11 support at most eight snakes")
         if not callable(opponent_policy):
             raise TypeError("opponent_policy must be callable")
-        if not 0 <= food_spawn_chance <= 100 or minimum_food < 0 or hazard_damage_per_turn < 0:
-            raise ValueError("settings must be non-negative and food_spawn_chance must be at most 100")
+        if (
+            not 0 <= food_spawn_chance <= 100
+            or minimum_food < 0
+            or hazard_damage_per_turn < 0
+        ):
+            raise ValueError(
+                "settings must be non-negative and food_spawn_chance must be at most 100"
+            )
         if max_turns is not None and max_turns < 1:
             raise ValueError("max_turns must be positive or None")
         if render_mode not in (None, "ansi"):
             raise ValueError("render_mode must be None or 'ansi'")
-        self.opponent_policy, self.width, self.height, self.num_snakes = opponent_policy, width, height, num_snakes
-        self.settings, self.max_turns, self.render_mode = Settings(food_spawn_chance, minimum_food, hazard_damage_per_turn), max_turns, render_mode
+        self.opponent_policy, self.width, self.height, self.num_snakes = (
+            opponent_policy,
+            width,
+            height,
+            num_snakes,
+        )
+        self.settings, self.max_turns, self.render_mode = (
+            Settings(food_spawn_chance, minimum_food, hazard_damage_per_turn),
+            max_turns,
+            render_mode,
+        )
+        self.metadata = {"render_modes": ["ansi"], "render_fps": 4}
         self.action_space = gym.spaces.Discrete(4)
-        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(8, height, width), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            0.0, 1.0, shape=(8, height, width), dtype=np.float32
+        )
         self.state: BoardState | None = None
         self._rng = random.Random()
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         super().reset(seed=seed)
         self._rng = random.Random(seed)
-        self.state = initial_state(self.width, self.height, tuple(f"snake-{i}" for i in range(self.num_snakes)), self._rng)
+        self.state = initial_state(
+            self.width,
+            self.height,
+            tuple(f"snake-{i}" for i in range(self.num_snakes)),
+            self._rng,
+        )
         return self._observation(), self._info()
 
     def step(self, action: int):
@@ -63,12 +94,18 @@ class BattlesnakeEnv(gym.Env[np.ndarray, int]):
             if snake.alive:
                 choice = self.opponent_policy(self.state, snake.id)
                 if not self.action_space.contains(choice):
-                    raise ValueError("opponent_policy must return an integer from 0 through 3")
+                    raise ValueError(
+                        "opponent_policy must return an integer from 0 through 3"
+                    )
                 moves[snake.id] = int(choice)
         self.state, already_over = step(self.state, moves, self.settings, self._rng)
         alive = [snake for snake in self.state.snakes if snake.alive]
         terminated = already_over or len(alive) <= 1
-        truncated = not terminated and self.max_turns is not None and self.state.turn >= self.max_turns
+        truncated = (
+            not terminated
+            and self.max_turns is not None
+            and self.state.turn >= self.max_turns
+        )
         reward = 0.0
         if terminated:
             if len(alive) == 1 and alive[0].id == learner.id:
@@ -81,7 +118,7 @@ class BattlesnakeEnv(gym.Env[np.ndarray, int]):
 
     def _observation(self) -> np.ndarray:
         assert self.state is not None
-        obs = np.zeros(self.observation_space.shape, dtype=np.float32)
+        obs = np.zeros((8, self.height, self.width), dtype=np.float32)
         learner = self.state.snakes[0]
         for snake in self.state.snakes:
             if not snake.alive:
@@ -97,7 +134,11 @@ class BattlesnakeEnv(gym.Env[np.ndarray, int]):
         for point in self.state.hazards:
             obs[5, point.y, point.x] = 1.0
         obs[6].fill(learner.health / MAX_HEALTH if learner.alive else 0.0)
-        obs[7].fill(0.0 if self.max_turns is None else min(1.0, self.state.turn / self.max_turns))
+        obs[7].fill(
+            0.0
+            if self.max_turns is None
+            else min(1.0, self.state.turn / self.max_turns)
+        )
         return obs
 
     def _info(self) -> dict:
@@ -107,7 +148,11 @@ class BattlesnakeEnv(gym.Env[np.ndarray, int]):
         if learner.alive:
             for action, (dx, dy) in DELTAS.items():
                 point = type(learner.head)(learner.head.x + dx, learner.head.y + dy)
-                mask[action] = int(0 <= point.x < self.width and 0 <= point.y < self.height and point not in learner.body[1:])
+                mask[action] = int(
+                    0 <= point.x < self.width
+                    and 0 <= point.y < self.height
+                    and point not in learner.body[1:]
+                )
         return {"action_mask": mask, "state": self.state}
 
     def render(self) -> str | None:

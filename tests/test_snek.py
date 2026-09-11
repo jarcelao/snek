@@ -1,4 +1,5 @@
 import csv
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -14,15 +15,18 @@ from snakes.snek import (
     network_action,
     train,
 )
-from snakes.snek.__main__ import main
-from snakes.snek.__main__ import _parser
+from snakes.snek.__main__ import _parser, main
 from snakes.snek.training import _game_fitness, _match_seeds
 
 
-def sample_state(*, food=(Point(5, 3),), opponents=True):
+def sample_state(*, food=None, opponents=True):
+    if food is None:
+        food = (Point(5, 3),)
     snakes = [Snake("learner", (Point(3, 3), Point(3, 2), Point(3, 1)), health=50)]
     if opponents:
-        snakes.append(Snake("opponent", (Point(1, 3), Point(1, 2), Point(1, 1), Point(0, 1))))
+        snakes.append(
+            Snake("opponent", (Point(1, 3), Point(1, 2), Point(1, 1), Point(0, 1)))
+        )
     return BoardState(7, 7, 25, food, (), tuple(snakes))
 
 
@@ -40,7 +44,9 @@ def test_encode_state_has_normalized_directional_features():
 
 
 def test_encode_state_uses_zero_vectors_when_targets_are_absent():
-    features = encode_state(sample_state(food=(), opponents=False), "learner", max_turns=100)
+    features = encode_state(
+        sample_state(food=(), opponents=False), "learner", max_turns=100
+    )
 
     assert features[12:16].tolist() == [0.0, 0.0, 0.0, 0.0]
     assert features[18] == 0.0
@@ -57,14 +63,24 @@ class StubNetwork:
 def test_network_action_filters_unsafe_moves_and_breaks_ties_by_action():
     state = sample_state()
 
-    assert network_action(StubNetwork((0.8, 1.0, 0.8, 0.1)), state, "learner", max_turns=100) == 0
+    assert (
+        network_action(
+            StubNetwork((0.8, 1.0, 0.8, 0.1)), state, "learner", max_turns=100
+        )
+        == 0
+    )
 
 
 def test_network_action_falls_back_when_no_action_is_advisory_safe():
     snake = Snake("learner", (Point(0, 0), Point(0, 1), Point(1, 1), Point(1, 0)))
     state = BoardState(7, 7, 0, (), (), (snake,))
 
-    assert network_action(StubNetwork((0.0, 0.1, 0.9, 0.2)), state, "learner", max_turns=100) == 2
+    assert (
+        network_action(
+            StubNetwork((0.0, 0.1, 0.9, 0.2)), state, "learner", max_turns=100
+        )
+        == 2
+    )
 
 
 @pytest.mark.parametrize(
@@ -81,15 +97,17 @@ def test_match_seeds_are_reproducible_and_generation_specific():
 
 
 def test_training_saves_loadable_winner_and_statistics(tmp_path):
-    result = train(TrainingOptions(
-        generations=1,
-        population=4,
-        games=1,
-        max_turns=2,
-        seed=4,
-        output_dir=tmp_path,
-        checkpoint_interval=1,
-    ))
+    result = train(
+        TrainingOptions(
+            generations=1,
+            population=4,
+            games=1,
+            max_turns=2,
+            seed=4,
+            output_dir=tmp_path,
+            checkpoint_interval=1,
+        )
+    )
 
     assert result.winner_path.parent.parent == tmp_path
     assert result.winner_path.exists()
@@ -97,42 +115,51 @@ def test_training_saves_loadable_winner_and_statistics(tmp_path):
     assert result.statistics_path.exists()
     checkpoint = next(result.winner_path.parent.glob("checkpoint-*"))
     with result.statistics_path.open(newline="") as stream:
-        assert next(csv.reader(stream)) == ["generation", "best_fitness", "mean_fitness"]
+        assert next(csv.reader(stream)) == [
+            "generation",
+            "best_fitness",
+            "mean_fitness",
+        ]
 
     policy = load_policy(result.winner_path, max_turns=2)
     assert policy(sample_state(), "learner") in range(4)
 
-    resumed = train(TrainingOptions(
-        generations=1,
-        population=4,
-        games=1,
-        max_turns=2,
-        seed=4,
-        output_dir=tmp_path / "resumed",
-        checkpoint_interval=0,
-        resume_checkpoint=checkpoint,
-    ))
+    resumed = train(
+        TrainingOptions(
+            generations=1,
+            population=4,
+            games=1,
+            max_turns=2,
+            seed=4,
+            output_dir=tmp_path / "resumed",
+            checkpoint_interval=0,
+            resume_checkpoint=checkpoint,
+        )
+    )
     assert resumed.winner_path.exists()
 
 
 def test_training_is_reproducible(tmp_path):
-    options = dict(
+    options = TrainingOptions(
         generations=1,
         population=4,
         games=1,
         max_turns=2,
         seed=8,
         checkpoint_interval=0,
+        output_dir=tmp_path / "first",
     )
 
-    first = train(TrainingOptions(output_dir=tmp_path / "first", **options))
-    second = train(TrainingOptions(output_dir=tmp_path / "second", **options))
+    first = train(options)
+    second = train(replace(options, output_dir=tmp_path / "second"))
 
     assert first.fitness == second.fitness
 
 
 def test_evaluate_reports_all_games():
-    result = evaluate(lambda state, snake_id: 0, EvaluationOptions(games=2, max_turns=2, seed=3))
+    result = evaluate(
+        lambda state, snake_id: 0, EvaluationOptions(games=2, max_turns=2, seed=3)
+    )
 
     assert result.wins + result.ties + result.losses == 2
     assert result.average_turns > 0

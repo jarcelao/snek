@@ -4,16 +4,14 @@ https://github.com/BattlesnakeOfficial/starter-snake-python
 """
 
 import argparse
-import typing
 
 from battlesnake_env import OpponentPolicy
 from battlesnake_env.rules import BoardState
 
-
 ACTION_BY_MOVE = {"up": 0, "down": 1, "left": 2, "right": 3}
 
 
-def move(game_state: typing.Dict) -> typing.Dict:
+def move(game_state: dict) -> dict:
     """Select a move from a Battlesnake-format game state."""
     is_move_safe = {"up": True, "down": True, "left": True, "right": True}
 
@@ -61,7 +59,10 @@ def move(game_state: typing.Dict) -> typing.Dict:
         dx, dy = deltas[direction]
         next_head = (my_head["x"] + dx, my_head["y"] + dy)
         return min(
-            (abs(next_head[0] - item["x"]) + abs(next_head[1] - item["y"]) for item in food),
+            (
+                abs(next_head[0] - item["x"]) + abs(next_head[1] - item["y"])
+                for item in food
+            ),
             default=0,
         )
 

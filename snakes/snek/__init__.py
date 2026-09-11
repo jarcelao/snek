@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from battlesnake_env import OpponentPolicy
+
 from .policy import encode_state, load_policy, network_action
 from .training import (
     EvaluationOptions,
@@ -15,17 +16,17 @@ from .training import (
 )
 
 __all__ = [
-    "encode_state",
-    "evaluate",
     "EvaluationOptions",
     "EvaluationResult",
-    "load_policy",
-    "network_action",
-    "train",
     "TrainingOptions",
     "TrainingResult",
     "configure_play_parser",
     "create_play_policy",
+    "encode_state",
+    "evaluate",
+    "load_policy",
+    "network_action",
+    "train",
 ]
 
 

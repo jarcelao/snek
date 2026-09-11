@@ -7,11 +7,22 @@ https://github.com/coreyja/battlesnake-rs/
 
 from __future__ import annotations
 
-from collections import deque
 import random
+from collections import deque
 
 from .env import OpponentPolicy
-from .rules import DELTAS, DOWN, LEFT, RIGHT, UP, BoardState, Point, Settings, Snake, step
+from .rules import (
+    DELTAS,
+    DOWN,
+    LEFT,
+    RIGHT,
+    UP,
+    BoardState,
+    Point,
+    Settings,
+    Snake,
+    step,
+)
 
 _ACTION_ORDER = (UP, DOWN, LEFT, RIGHT)
 _FROZEN_FOOD_SETTINGS = Settings(food_spawn_chance=0, minimum_food=0)
@@ -38,7 +49,9 @@ def _legal_actions(state: BoardState, snake: Snake) -> tuple[int, ...]:
     return tuple(actions) or (UP,)
 
 
-def _distance(state: BoardState, start: Point, targets: tuple[Point, ...]) -> int | None:
+def _distance(
+    state: BoardState, start: Point, targets: tuple[Point, ...]
+) -> int | None:
     """Find the shortest path while treating snake bodies as blocked."""
     if not targets:
         return None
@@ -52,15 +65,22 @@ def _distance(state: BoardState, start: Point, targets: tuple[Point, ...]) -> in
             return distance
         for dx, dy in DELTAS.values():
             neighbor = Point(point.x + dx, point.y + dy)
-            if (neighbor in visited or neighbor in blocked and neighbor not in target_set
-                    or not 0 <= neighbor.x < state.width or not 0 <= neighbor.y < state.height):
+            if (
+                neighbor in visited
+                or neighbor in blocked
+                and neighbor not in target_set
+                or not 0 <= neighbor.x < state.width
+                or not 0 <= neighbor.y < state.height
+            ):
                 continue
             visited.add(neighbor)
             queue.append((neighbor, distance + 1))
     return None
 
 
-def _score(state: BoardState, snake_id: str, completed_turns: int) -> tuple[int, int, int, int]:
+def _score(
+    state: BoardState, snake_id: str, completed_turns: int
+) -> tuple[int, int, int, int]:
     """Return Devin's ordered terminal or positional score."""
     alive = _living(state)
     me = next(snake for snake in state.snakes if snake.id == snake_id)
@@ -79,10 +99,20 @@ def _score(state: BoardState, snake_id: str, completed_turns: int) -> tuple[int,
     health = max(me.health, 50)
     if max_opponent_length >= len(me.body) or me.health < 20:
         distance = _distance(state, me.head, state.food)
-        return (2, length_difference, _NO_PATH if distance is None else -distance, health)
+        return (
+            2,
+            length_difference,
+            _NO_PATH if distance is None else -distance,
+            health,
+        )
 
     distance = _distance(state, me.head, tuple(snake.head for snake in opponents))
-    return (3, _NO_PATH if distance is None else -distance, max(length_difference, 4), health)
+    return (
+        3,
+        _NO_PATH if distance is None else -distance,
+        max(length_difference, 4),
+        health,
+    )
 
 
 def _advance(state: BoardState, moves: dict[str, int]) -> BoardState:
@@ -129,7 +159,12 @@ def devious_devin(*, max_depth: int = 2, max_nodes: int = 50_000) -> OpponentPol
         completed: tuple[int, tuple[int, int, int, int]] | None = None
         nodes = 0
         for depth_limit in range(1, max_depth + 1):
-            def search_round(node: BoardState, turns: int) -> tuple[int, int, int, int]:
+
+            def search_round(
+                node: BoardState,
+                turns: int,
+                depth_limit: int = depth_limit,
+            ) -> tuple[int, int, int, int]:
                 nonlocal nodes
                 nodes += 1
                 if nodes > max_nodes:
@@ -137,20 +172,31 @@ def devious_devin(*, max_depth: int = 2, max_nodes: int = 50_000) -> OpponentPol
                 if turns == depth_limit or len(_living(node)) <= 1:
                     return _score(node, snake_id, turns)
 
-                players = tuple(snake for snake in _living(node) if snake.id == snake_id)
-                players += tuple(snake for snake in _living(node) if snake.id != snake_id)
+                players = tuple(
+                    snake for snake in _living(node) if snake.id == snake_id
+                )
+                players += tuple(
+                    snake for snake in _living(node) if snake.id != snake_id
+                )
 
-                def choose(index: int, moves: dict[str, int]) -> tuple[int, int, int, int]:
+                def choose(
+                    index: int, pending_moves: dict[str, int]
+                ) -> tuple[int, int, int, int]:
                     nonlocal nodes
                     nodes += 1
                     if nodes > max_nodes:
                         raise _SearchLimitReached
                     if index == len(players):
-                        return search_round(_advance(node, moves), turns + 1)
+                        return search_round(_advance(node, pending_moves), turns + 1)
                     player = players[index]
                     scores = []
                     for action in _legal_actions(node, player):
-                        scores.append(choose(index + 1, moves | {player.id: action}))
+                        scores.append(
+                            choose(
+                                index + 1,
+                                pending_moves | {player.id: action},
+                            )
+                        )
                     return max(scores) if player.id == snake_id else min(scores)
 
                 return choose(0, {})
@@ -162,9 +208,15 @@ def devious_devin(*, max_depth: int = 2, max_nodes: int = 50_000) -> OpponentPol
                 for action in _legal_actions(state, me):
                     # Start with Devin's move so that he is the maximizing player.
                     moves = {snake_id: action}
-                    remaining = tuple(snake for snake in players if snake.id != snake_id)
+                    remaining = tuple(
+                        snake for snake in players if snake.id != snake_id
+                    )
 
-                    def choose_opponent(index: int, pending: dict[str, int]) -> tuple[int, int, int, int]:
+                    def choose_opponent(
+                        index: int,
+                        pending: dict[str, int],
+                        remaining: tuple[Snake, ...] = remaining,
+                    ) -> tuple[int, int, int, int]:
                         nonlocal nodes
                         nodes += 1
                         if nodes > max_nodes:
@@ -182,6 +234,10 @@ def devious_devin(*, max_depth: int = 2, max_nodes: int = 50_000) -> OpponentPol
             except _SearchLimitReached:
                 break
 
-        return completed[0] if completed is not None else _one_ply_fallback(state, snake_id)
+        return (
+            completed[0]
+            if completed is not None
+            else _one_ply_fallback(state, snake_id)
+        )
 
     return policy

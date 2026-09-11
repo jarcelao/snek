@@ -7,10 +7,10 @@ from .rules import BoardState, Elimination, Point, Settings, Snake
 __all__ = [
     "BattlesnakeEnv",
     "BoardState",
-    "devious_devin",
     "Elimination",
     "OpponentPolicy",
     "Point",
     "Settings",
     "Snake",
+    "devious_devin",
 ]

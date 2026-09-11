@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import pickle
 from collections.abc import Sequence
 from pathlib import Path
-import pickle
 from typing import Protocol
 
 import neat
@@ -60,11 +60,13 @@ def encode_state(state: BoardState, snake_id: str, *, max_turns: int) -> np.ndar
     for action in range(4):
         dx, dy = DELTAS[action]
         adjacent = type(head)(head.x + dx, head.y + dy)
-        safe.append(float(
-            0 <= adjacent.x < state.width
-            and 0 <= adjacent.y < state.height
-            and adjacent not in snake.body[1:]
-        ))
+        safe.append(
+            float(
+                0 <= adjacent.x < state.width
+                and 0 <= adjacent.y < state.height
+                and adjacent not in snake.body[1:]
+            )
+        )
 
         steps_to_wall = 0
         point = head
@@ -128,7 +130,7 @@ def network_action(
 ) -> int:
     """Select the highest-scoring advisory safe action."""
     features = encode_state(state, snake_id, max_turns=max_turns)
-    outputs = tuple(network.activate(features))
+    outputs = tuple(network.activate(tuple(float(feature) for feature in features)))
     if len(outputs) != 4:
         raise ValueError("network must return four outputs")
     candidates = [action for action in range(4) if features[action] == 1.0]
@@ -155,7 +157,11 @@ def load_policy(
 ) -> OpponentPolicy:
     """Load a saved winning genome as an environment policy."""
     genome_file = Path(genome_path)
-    effective_config = Path(config_path) if config_path is not None else genome_file.with_name("config.ini")
+    effective_config = (
+        Path(config_path)
+        if config_path is not None
+        else genome_file.with_name("config.ini")
+    )
     with genome_file.open("rb") as stream:
         genome = pickle.load(stream)
     network = neat.nn.FeedForwardNetwork.create(genome, _load_config(effective_config))

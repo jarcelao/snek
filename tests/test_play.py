@@ -19,18 +19,25 @@ def test_sneklet_adapter_adds_no_options_and_returns_its_policy():
     parser = argparse.ArgumentParser()
     sneklet.configure_play_parser(parser)
 
-    assert sneklet.create_play_policy(parser.parse_args([])) is sneklet.environment_policy
+    assert (
+        sneklet.create_play_policy(parser.parse_args([])) is sneklet.environment_policy
+    )
 
 
 def test_snek_adapter_loads_the_selected_model(monkeypatch, tmp_path):
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-turns", type=int, default=500)
     snek.configure_play_parser(parser)
-    args = parser.parse_args([
-        "--genome", str(tmp_path / "winner.pkl"),
-        "--config", str(tmp_path / "config.ini"),
-        "--max-turns", "75",
-    ])
+    args = parser.parse_args(
+        [
+            "--genome",
+            str(tmp_path / "winner.pkl"),
+            "--config",
+            str(tmp_path / "config.ini"),
+            "--max-turns",
+            "75",
+        ]
+    )
     policy = lambda state, snake_id: 0
     calls = []
 
@@ -44,10 +51,13 @@ def test_snek_adapter_loads_the_selected_model(monkeypatch, tmp_path):
     assert calls == [(tmp_path / "winner.pkl", tmp_path / "config.ini", 75)]
 
 
-@pytest.mark.parametrize("arguments", [
-    ["--snake", "not_snakes"],
-    ["--snake", "snakes.snek.policy"],
-])
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--snake", "not_snakes"],
+        ["--snake", "snakes.snek.policy"],
+    ],
+)
 def test_main_rejects_invalid_snake_adapters(arguments, capsys):
     with pytest.raises(SystemExit) as error:
         play.main(arguments)

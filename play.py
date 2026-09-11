@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
 import importlib
+from collections.abc import Sequence
 from types import ModuleType
 
 from battlesnake_env import BattlesnakeEnv, OpponentPolicy, devious_devin
@@ -74,7 +74,13 @@ def play(
             print(env.render())
         if terminated or truncated:
             learner = info["state"].snakes[0]
-            result = "won" if reward > 0 else "lost" if reward < 0 else "tied or reached the turn limit"
+            result = (
+                "won"
+                if reward > 0
+                else "lost"
+                if reward < 0
+                else "tied or reached the turn limit"
+            )
             print(
                 f"Seed {seed}: {snake_name} {result} on turn "
                 f"{info['state'].turn} ({learner.elimination or 'last snake alive'})."

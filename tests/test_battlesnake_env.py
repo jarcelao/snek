@@ -1,8 +1,8 @@
 import random
 
-from gymnasium.utils.env_checker import check_env
 import numpy as np
 import pytest
+from gymnasium.utils.env_checker import check_env
 
 from battlesnake_env import BattlesnakeEnv, BoardState, Point, Snake
 from battlesnake_env.rules import Elimination, Settings, step
@@ -29,7 +29,14 @@ def test_food_growth_and_sparse_win_reward():
     assert env.state is not None
     learner = env.state.snakes[0]
     target = Point(learner.head.x, learner.head.y + 1)
-    env.state = BoardState(env.state.width, env.state.height, env.state.turn, (target,), env.state.hazards, env.state.snakes)
+    env.state = BoardState(
+        env.state.width,
+        env.state.height,
+        env.state.turn,
+        (target,),
+        env.state.hazards,
+        env.state.snakes,
+    )
 
     _, _, _, _, info = env.step(0)
 
@@ -75,13 +82,33 @@ def test_observation_and_action_mask_are_in_declared_spaces():
     ("state", "moves", "expected"),
     [
         pytest.param(
-            BoardState(7, 7, 0, (), (), (Snake("one", (Point(0, 0), Point(0, 1))), Snake("two", (Point(5, 5), Point(5, 4))))),
+            BoardState(
+                7,
+                7,
+                0,
+                (),
+                (),
+                (
+                    Snake("one", (Point(0, 0), Point(0, 1))),
+                    Snake("two", (Point(5, 5), Point(5, 4))),
+                ),
+            ),
             {"one": 1, "two": 0},
             (Elimination.OUT_OF_BOUNDS, Elimination.NONE),
             id="wall-collision",
         ),
         pytest.param(
-            BoardState(7, 7, 0, (), (), (Snake("one", (Point(2, 2), Point(2, 1))), Snake("two", (Point(2, 4), Point(2, 5))))),
+            BoardState(
+                7,
+                7,
+                0,
+                (),
+                (),
+                (
+                    Snake("one", (Point(2, 2), Point(2, 1))),
+                    Snake("two", (Point(2, 4), Point(2, 5))),
+                ),
+            ),
             {"one": 0, "two": 1},
             (Elimination.HEAD_COLLISION, Elimination.HEAD_COLLISION),
             id="equal-head-to-head",
@@ -95,10 +122,17 @@ def test_eliminations(state, moves, expected):
 
 
 def test_food_saves_the_last_health_point():
-    state = BoardState(7, 7, 0, (Point(2, 3),), (), (
-        Snake("one", (Point(2, 2), Point(2, 1)), health=1),
-        Snake("two", (Point(5, 5), Point(5, 4))),
-    ))
+    state = BoardState(
+        7,
+        7,
+        0,
+        (Point(2, 3),),
+        (),
+        (
+            Snake("one", (Point(2, 2), Point(2, 1)), health=1),
+            Snake("two", (Point(5, 5), Point(5, 4))),
+        ),
+    )
     next_state, _ = step(state, {"one": 0, "two": 0}, Settings(0, 0), random.Random(1))
 
     assert next_state.snakes[0].alive
