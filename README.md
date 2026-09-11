@@ -70,15 +70,15 @@ uv run python -m snakes.snek train
 ```
 
 The command writes `winner.pkl`, the effective `config.ini`, a statistics CSV,
-and periodic checkpoints to `snek-training/`. Use command options to change the
-workload or output location:
+and periodic checkpoints to a timestamped subfolder under `train/snek/`. Use
+command options to change the workload or output parent:
 
 ```console
 uv run python -m snakes.snek train \
   --generations 50 \
   --population 100 \
   --games 10 \
-  --output-dir training/run-1
+  --output-dir train/snek
 ```
 
 Resume a run from a checkpoint. `--generations` is the number of additional
@@ -86,9 +86,9 @@ generations to run:
 
 ```console
 uv run python -m snakes.snek train \
-  --resume-checkpoint training/run-1/checkpoint-10 \
+  --resume-checkpoint train/snek/20260912-142530-123456/checkpoint-10 \
   --generations 10 \
-  --output-dir training/run-1
+  --output-dir train/snek
 ```
 
 Evaluate a saved winner on a stable benchmark seed set:

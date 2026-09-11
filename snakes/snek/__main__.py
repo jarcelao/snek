@@ -33,7 +33,7 @@ def _parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--max-turns", type=_positive, default=250)
     train_parser.add_argument("--devin-depth", type=_positive, default=1)
     train_parser.add_argument("--seed", type=int, default=0)
-    train_parser.add_argument("--output-dir", type=Path, default=Path("snek-training"))
+    train_parser.add_argument("--output-dir", type=Path, default=Path("train/snek"))
     train_parser.add_argument("--checkpoint-interval", type=_non_negative, default=5)
     train_parser.add_argument("--resume-checkpoint", type=Path)
 

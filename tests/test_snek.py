@@ -15,6 +15,7 @@ from snakes.snek import (
     train,
 )
 from snakes.snek.__main__ import main
+from snakes.snek.__main__ import _parser
 from snakes.snek.training import _game_fitness, _match_seeds
 
 
@@ -90,10 +91,11 @@ def test_training_saves_loadable_winner_and_statistics(tmp_path):
         checkpoint_interval=1,
     ))
 
+    assert result.winner_path.parent.parent == tmp_path
     assert result.winner_path.exists()
     assert result.config_path.exists()
     assert result.statistics_path.exists()
-    assert list(tmp_path.glob("checkpoint-*"))
+    checkpoint = next(result.winner_path.parent.glob("checkpoint-*"))
     with result.statistics_path.open(newline="") as stream:
         assert next(csv.reader(stream)) == ["generation", "best_fitness", "mean_fitness"]
 
@@ -108,7 +110,7 @@ def test_training_saves_loadable_winner_and_statistics(tmp_path):
         seed=4,
         output_dir=tmp_path / "resumed",
         checkpoint_interval=0,
-        resume_checkpoint=next(tmp_path.glob("checkpoint-*")),
+        resume_checkpoint=checkpoint,
     ))
     assert resumed.winner_path.exists()
 
@@ -139,3 +141,7 @@ def test_evaluate_reports_all_games():
 def test_cli_rejects_non_positive_values():
     with pytest.raises(SystemExit):
         main(["train", "--games", "0"])
+
+
+def test_training_cli_uses_train_snek_as_default_output_parent():
+    assert _parser().parse_args(["train"]).output_dir == Path("train/snek")

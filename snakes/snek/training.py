@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import csv
+from datetime import datetime
 from pathlib import Path
 import pickle
 import random
@@ -25,7 +26,7 @@ class TrainingOptions:
     max_turns: int = 250
     devin_depth: int = 1
     seed: int = 0
-    output_dir: Path = Path("snek-training")
+    output_dir: Path = Path("train/snek")
     checkpoint_interval: int = 5
     resume_checkpoint: Path | None = None
 
@@ -94,6 +95,14 @@ def _match_seeds(seed: int, generation: int, games: int) -> tuple[int, ...]:
     return tuple(rng.randrange(2**31) for _ in range(games))
 
 
+def _create_run_output_dir(parent_dir: Path) -> Path:
+    """Create a unique timestamped directory for one training run."""
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    run_dir = parent_dir / timestamp
+    run_dir.mkdir(parents=True, exist_ok=False)
+    return run_dir
+
+
 def evaluate(policy: OpponentPolicy, options: EvaluationOptions = EvaluationOptions()) -> EvaluationResult:
     """Evaluate a policy on a stable benchmark seed set."""
     _validate_positive("games", options.games)
@@ -146,8 +155,7 @@ def train(options: TrainingOptions = TrainingOptions()) -> TrainingResult:
     if options.checkpoint_interval < 0:
         raise ValueError("checkpoint_interval must be non-negative")
 
-    output_dir = Path(options.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = _create_run_output_dir(Path(options.output_dir))
     config_path = output_dir / "config.ini"
     base_config = Path(__file__).with_name("config.ini")
     config = _load_config(base_config)
