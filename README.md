@@ -42,6 +42,21 @@ _, info = env.reset(seed=7)
 action = environment_policy(info["state"], "snake-0")
 ```
 
+Run a local match with a snake adapter. The default adapter is Sneklet:
+
+```console
+uv run python play.py
+```
+
+Select another adapter with `--snake`. Each adapter supplies its own options:
+
+```console
+uv run python play.py --snake snakes.snek --genome training/run-1/winner.pkl
+```
+
+Snake adapters must be modules inside `snakes` that define
+`configure_play_parser(parser)` and `create_play_policy(args)`.
+
 ## NEAT snake
 
 `snakes.snek` trains a feed-forward NEAT network against Devious Devin. The

@@ -3,8 +3,10 @@ Basic snake adapted from the official Battlesnake Python template:
 https://github.com/BattlesnakeOfficial/starter-snake-python
 """
 
+import argparse
 import typing
 
+from battlesnake_env import OpponentPolicy
 from battlesnake_env.rules import BoardState
 
 
@@ -94,3 +96,12 @@ def environment_policy(state: BoardState, snake_id: str) -> int:
         },
     }
     return ACTION_BY_MOVE[move(game_state)["move"]]
+
+
+def configure_play_parser(parser: argparse.ArgumentParser) -> None:
+    """Add Sneklet options to the local match parser."""
+
+
+def create_play_policy(args: argparse.Namespace) -> OpponentPolicy:
+    """Create Sneklet's environment policy for a local match."""
+    return environment_policy
