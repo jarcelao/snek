@@ -15,6 +15,15 @@ observation, info = env.reset(seed=123)
 observation, reward, terminated, truncated, info = env.step(0)
 ```
 
+`devious_devin()` provides a deterministic paranoid-minimax opponent. Its
+`max_depth` value is the number of complete simultaneous turns it searches.
+
+```python
+from battlesnake_env import BattlesnakeEnv, devious_devin
+
+env = BattlesnakeEnv(opponent_policy=devious_devin(max_depth=2))
+```
+
 The observation is an eight-channel `float32` board tensor. `info` contains an
 immutable `BoardState` and an advisory action mask. Use `render_mode="ansi"`
 to return a text board for debugging.
