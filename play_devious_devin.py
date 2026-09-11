@@ -1,4 +1,4 @@
-"""Run a local match: the template snake versus Devious Devin."""
+"""Run a local match: snek versus Devious Devin."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def play(seed: int, *, render: bool = False) -> tuple[float, int, str]:
             learner = info["state"].snakes[0]
             result = "won" if reward > 0 else "lost" if reward < 0 else "tied or reached the turn limit"
             print(
-                f"Seed {seed}: template snake {result} on turn "
+                f"Seed {seed}: snek {result} on turn "
                 f"{info['state'].turn} ({learner.elimination or 'last snake alive'})."
             )
             return reward, info["state"].turn, result

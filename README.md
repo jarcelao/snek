@@ -30,7 +30,7 @@ to return a text board for debugging.
 
 ## Snake policy
 
-`snek.py` contains the template snake policy. Use `environment_policy` with
+`snek.py` contains an example policy. Use `environment_policy` with
 `BattlesnakeEnv` to play it in a local match.
 
 ```python
